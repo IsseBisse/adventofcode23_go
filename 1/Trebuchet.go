@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 func readLines(path string) ([]string, error) {
@@ -20,11 +21,16 @@ func readLines(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-func partOne() {
-	lines, _ := readLines("input.txt")
-	// lines, _ := readLines("smallInput.txt")
+type digitParser func(string) int
 
-	re := regexp.MustCompile("[0-9]")
+func intStringToInt(str string) int {
+	number, _ := strconv.Atoi(str)
+	return number
+}
+
+func getCalibration(path string, re *regexp.Regexp, parsingFunc digitParser) int {
+	lines, _ := readLines(path)
+
 	var calibrationNumbers []int
 	for _, line := range lines {
 		matches := re.FindAll([]byte(line), -1)
@@ -36,7 +42,7 @@ func partOne() {
 			numberString += string(matches[len(matches)-1])
 		}
 
-		number, _ := strconv.Atoi(numberString)
+		number := intStringToInt(numberString)
 		calibrationNumbers = append(calibrationNumbers, number)
 	}
 
@@ -45,14 +51,51 @@ func partOne() {
 		calibrationSum += number
 	}
 
+	return calibrationSum
+}
+
+func partOne() {
+	re := regexp.MustCompile("[0-9]")
+	calibrationSum := getCalibration("input.txt", re, intStringToInt)
 	fmt.Println(calibrationSum)
 }
 
-func partTwo() {
+var wordsToDigits = map[string]int{
+	"one":   1,
+	"two":   2,
+	"three": 3,
+	"four":  4,
+	"five":  5,
+	"six":   6,
+	"seven": 7,
+	"eight": 8,
+	"nine":  9,
+}
 
+func wordOrIntToInt(str string) int {
+	re := regexp.MustCompile("[a-z]")
+	if re.Match([]byte(str)) {
+		return wordsToDigits[str]
+	} else {
+		return intStringToInt(str)
+	}
+}
+
+func partTwo() {
+	words := make([]string, len(wordsToDigits))
+	i := 0
+	for word := range wordsToDigits {
+		words[i] = word
+		i++
+	}
+	wordsString := strings.Join(words[:], "|")
+	// TODO: Go doesn't support negative look-ahead so this regex must be redone somehow
+	re := regexp.MustCompile("(?=([0-9]|" + wordsString + "))")
+	calibrationSum := getCalibration("smallInput.txt", re, wordOrIntToInt)
+	fmt.Println(calibrationSum)
 }
 
 func main() {
-	partOne()
+	// partOne()
 	partTwo()
 }
